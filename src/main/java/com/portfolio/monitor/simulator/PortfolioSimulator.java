@@ -3,8 +3,6 @@ package com.portfolio.monitor.simulator;
 import java.text.DecimalFormat;
 import java.util.Random;
 
-import com.google.common.math.StatsAccumulator;
-
 public class PortfolioSimulator {
     public static void main(String[] args) throws InterruptedException {
         // Constants

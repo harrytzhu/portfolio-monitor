@@ -12,10 +12,12 @@ public class QueueEngine {
     private final Queue<Map<String, Double>> queue = new ConcurrentLinkedQueue<>();
 
     public void publish(Map<String, Double> securityPriceMap) {
+        System.out.println("Publishing: " + securityPriceMap);
         queue.add(securityPriceMap);
     }
 
     public Map<String, Double> poll() {
+        System.out.println("Polling: " + queue);
         return queue.poll();
     }
 }
