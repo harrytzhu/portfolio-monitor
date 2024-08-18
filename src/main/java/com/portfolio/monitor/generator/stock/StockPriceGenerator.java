@@ -1,5 +1,6 @@
 package com.portfolio.monitor.generator.stock;
 
+import com.portfolio.monitor.constant.CommonConstant;
 import com.portfolio.monitor.model.dto.StockDto;
 import org.springframework.stereotype.Component;
 
@@ -15,18 +16,17 @@ public class StockPriceGenerator {
         // Parameters
         double mu = stockDto.getExpectedReturn(); // Expected return
         double sigma = stockDto.getVolatility(); // Annualized standard deviation
-        double deltaT = 1.0 / 7257600; // Time increment in years (1 week)
+        double deltaT = 1.0 / CommonConstant.TRADING_SECONDS_OF_A_YEAR; // Time increment in years (1 second)
 
         // Generate random relative change
-        DecimalFormat df = new DecimalFormat("#.00");
         double relativeChange = generateRelativeChange(mu, sigma, deltaT);
         double currentPrice = stockDto.getPrice();
         currentPrice *= (1 + relativeChange);
         if (currentPrice < 0.0) {
             currentPrice = 0.0;
         }
-        System.out.println("Relative Change: " + relativeChange);
-        System.out.println("Stock price: " + df.format(currentPrice));
+        //DecimalFormat df = new DecimalFormat("#.00");
+        //System.out.printf("Symbol: %s, Relative Change: %s, Stock price: %s%n", stockDto.getSymbol(), relativeChange, currentPrice);
         return currentPrice;
     }
 

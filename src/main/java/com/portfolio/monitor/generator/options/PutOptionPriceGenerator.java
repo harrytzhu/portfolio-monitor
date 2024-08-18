@@ -7,7 +7,7 @@ public class PutOptionPriceGenerator extends AbstractOptionPriceGenerator {
     }
 
     @Override
-    Double getEuropeanOptionPrice(Double stockPrice, Double strikePrice, Double timeToMaturity, Double d1, Double d2) {
+    protected Double getEuropeanOptionPrice(Double stockPrice, Double strikePrice, Double timeToMaturity, Double d1, Double d2) {
         return strikePrice * Math.exp(-riskFreeRate * timeToMaturity) * cumulativeNormal(-d2) -
                 stockPrice * cumulativeNormal(-d1);
     }

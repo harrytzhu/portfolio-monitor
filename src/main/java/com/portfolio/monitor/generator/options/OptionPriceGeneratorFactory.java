@@ -7,8 +7,11 @@ import org.springframework.stereotype.Component;
 @Component
 public class OptionPriceGeneratorFactory {
 
-    @Value("${app.risk-free-rate}")
     private double riskFreeRate;
+
+    public OptionPriceGeneratorFactory(@Value("${app.risk-free-rate}") double riskFreeRate) {
+        this.riskFreeRate = riskFreeRate;
+    }
 
     public OptionPriceGenerator getOptionPriceGenerator(OptionTypeEnum optionType) {
         switch (optionType) {
@@ -17,7 +20,7 @@ public class OptionPriceGeneratorFactory {
             case PUT:
                 return new PutOptionPriceGenerator(riskFreeRate);
             default:
-                return null;
+                throw new IllegalArgumentException("Unknown option type: " + optionType);
         }
     }
 }

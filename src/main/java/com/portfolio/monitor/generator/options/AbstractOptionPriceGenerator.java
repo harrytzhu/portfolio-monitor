@@ -25,11 +25,11 @@ public abstract class AbstractOptionPriceGenerator implements OptionPriceGenerat
         return getEuropeanOptionPrice(stockPrice, strikePrice, timeToMaturity, d1, d2);
     }
 
-    protected static double cumulativeNormal(double x) {
+    protected double cumulativeNormal(double x) {
         return 0.5 * (1.0 + erf(x / Math.sqrt(2.0)));
     }
 
-    protected static double erf(double z) {
+    protected double erf(double z) {
         double t = 1.0 / (1.0 + 0.5 * Math.abs(z));
         double tau = t * Math.exp(-z * z - 1.26551223 +
                 t * (1.00002368 +

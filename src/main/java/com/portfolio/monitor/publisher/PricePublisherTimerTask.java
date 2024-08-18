@@ -6,13 +6,13 @@ import com.portfolio.monitor.generator.options.OptionPriceGenerator;
 import com.portfolio.monitor.generator.options.OptionPriceGeneratorFactory;
 import com.portfolio.monitor.generator.stock.StockPriceGenerator;
 import com.portfolio.monitor.model.dto.OptionDto;
+import com.portfolio.monitor.model.dto.PriceDto;
 import com.portfolio.monitor.model.dto.StockDto;
 import com.portfolio.monitor.model.entity.OptionEntity;
 import com.portfolio.monitor.model.entity.StockEntity;
 import com.portfolio.monitor.queue.QueueEngine;
 import com.portfolio.monitor.repository.OptionRepository;
 import com.portfolio.monitor.repository.StockRepository;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.*;
@@ -26,15 +26,14 @@ public class PricePublisherTimerTask extends TimerTask {
 
     private final StockRepository stockRepository;
 
-    private OptionRepository optionRepository;
+    private final OptionRepository optionRepository;
 
-    private StockPriceGenerator stockPriceGenerator;
+    private final StockPriceGenerator stockPriceGenerator;
 
-    private OptionPriceGeneratorFactory optionPriceGeneratorFactory;
+    private final OptionPriceGeneratorFactory optionPriceGeneratorFactory;
 
-    private QueueEngine queueEngine;
+    private final QueueEngine queueEngine;
 
-    @Autowired
     public PricePublisherTimerTask(StockRepository stockRepository, OptionRepository optionRepository,
             StockPriceGenerator stockPriceGenerator, OptionPriceGeneratorFactory optionPriceGeneratorFactory,
             QueueEngine queueEngine) {
@@ -56,21 +55,26 @@ public class PricePublisherTimerTask extends TimerTask {
         }
 
         // Generate prices
-        Map<String, Double> securityPriceMap = new HashMap<>();
+        Map<String, Double> priceMap = new HashMap<>();
+        Map<String, Double> changedMap = new HashMap<>();
         for (Map.Entry<String, StockDto> entry : stockMap.entrySet()) {
             StockDto stockDto = entry.getValue();
-            stockDto.setPrice(stockPriceGenerator.generate(stockDto));
-            securityPriceMap.put(stockDto.getSymbol(), stockDto.getPrice());
+            Double price = stockDto.getPrice();
+            Double newPrice = stockPriceGenerator.generate(stockDto);
+            if (Math.abs(price - newPrice) > CommonConstant.STOCK_PRICE_CHANGE_THRESHOLD) {
+                changedMap.put(stockDto.getSymbol(), newPrice);
+            }
+            stockDto.setPrice(newPrice);
+            priceMap.put(stockDto.getSymbol(), stockDto.getPrice());
         }
         for (OptionDto optionDto : optionDtos) {
             optionDto.setStockPrice(stockMap.get(optionDto.getStockSymbol()).getPrice());
             OptionPriceGenerator optionPriceGenerator = optionPriceGeneratorFactory.getOptionPriceGenerator(optionDto.getOptionType());
             optionDto.setPrice(optionPriceGenerator.generate(optionDto));
-            securityPriceMap.put(optionDto.getSymbol(), optionDto.getPrice());
+            priceMap.put(optionDto.getSymbol(), optionDto.getPrice());
         }
-        if (securityPriceMap.size() > 0) {
-            queueEngine.publish(securityPriceMap);
-        }
+        PriceDto priceDto = new PriceDto(priceMap, changedMap);
+        queueEngine.publish(priceDto);
     }
 
     private void initializeStockDtos() {
@@ -95,7 +99,7 @@ public class PricePublisherTimerTask extends TimerTask {
             optionDto.setStockSymbol(optionEntity.getStockSymbol());
             optionDto.setVolatility(optionEntity.getVolatility());
             optionDto.setStrikePrice(optionEntity.getStrikePrice());
-            optionDto.setTimeToMaturity(1.0D * optionEntity.getDaysToMaturity() / CommonConstant.TRADING_DAYS);
+            optionDto.setTimeToMaturity(1.0D * optionEntity.getDaysToMaturity() / CommonConstant.TRADING_DAYS_OF_A_YEAR);
             optionDto.setStockPrice(stockMap.get(optionDto.getStockSymbol()).getPrice());
             optionDto.setOptionType(OptionTypeEnum.valueOf(optionEntity.getOptionType()));
             optionDtos.add(optionDto);
